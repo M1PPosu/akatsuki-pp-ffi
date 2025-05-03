@@ -9,7 +9,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 interoptopus = "0.14.14"
-akatsuki-pp-rs = { package = "akatsuki-pp", git = "https://github.com/RealistikOsu/akatsuki-pp-rs", rev = "5bdd9cdec2e2be1e6052ff099f580007f5495ca6" }
+akatsuki-pp-rs = { package = "akatsuki-pp", git = "https://github.com/RealistikOsu/akatsuki-pp-rs", rev = "176119008e983c5ad1e52257103c11e9c5e6beb4" }
 
 [dev-dependencies]
 interoptopus_backend_csharp = "0.14.14"
