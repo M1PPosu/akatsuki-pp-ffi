@@ -1,18 +1,14 @@
-use akatsuki_pp::{
-    any::PerformanceAttributes,
-    model::mode::GameMode,
 use akatsuki_pp_rs::{
-    any::PerformanceAttributes,
     model::mode::GameMode,
     osu_2019::{stars::OsuPerformanceAttributes, OsuPP},
-    Beatmap,
-    Beatmap,
+    Beatmap as AkatsukiBeatmap,
 };
 use interoptopus::{
     extra_type, ffi_function, ffi_type, function,
     patterns::{option::FFIOption, slice::FFISlice},
     Inventory, InventoryBuilder,
 };
+use rosu_pp::{any::PerformanceAttributes, Beatmap};
 use std::ffi::CStr;
 use std::os::raw::c_char;
 
@@ -81,10 +77,10 @@ fn calculate_performance(
     passed_objects: Option<u32>,
 ) -> CalculatePerformanceResult {
     let beatmap_path = CStr::from_ptr(beatmap_path).to_str().unwrap();
-    let beatmap = Beatmap::from_path(beatmap_path).unwrap();
-
     // osu!std rx
+    
     if mode == 0 && mods & 128 > 0 {
+        let beatmap = AkatsukiBeatmap::from_path(beatmap_path).unwrap();
         let mut calculator = OsuPP::from_map(&beatmap);
         calculator = calculator
             .mods(mods)
@@ -100,6 +96,7 @@ fn calculate_performance(
         let rosu_result = calculator.calculate();
         CalculatePerformanceResult::from_rx_attributes(rosu_result)
     } else {
+        let beatmap = Beatmap::from_path(beatmap_path).unwrap();
         let mut calculator = beatmap
             .performance()
             .try_mode(match mode {
@@ -139,10 +136,10 @@ pub unsafe extern "C" fn calculate_score_bytes(
     passed_objects: FFIOption<u32>,
 ) -> CalculatePerformanceResult {
     let bytes = std::slice::from_raw_parts(beatmap_bytes, len as usize);
-    let beatmap = Beatmap::from_bytes(bytes).unwrap();
-
+    
     // osu!std rx
     if mode == 0 && mods & 128 > 0 {
+        let beatmap = AkatsukiBeatmap::from_bytes(bytes).unwrap();
         let mut calculator = OsuPP::from_map(&beatmap);
         calculator = calculator
             .mods(mods)
@@ -158,6 +155,7 @@ pub unsafe extern "C" fn calculate_score_bytes(
         let rosu_result = calculator.calculate();
         CalculatePerformanceResult::from_rx_attributes(rosu_result)
     } else {
+        let beatmap = Beatmap::from_bytes(bytes).unwrap();
         let mut calculator = beatmap
             .performance()
             .try_mode(match mode {
@@ -168,8 +166,8 @@ pub unsafe extern "C" fn calculate_score_bytes(
                 _ => panic!("Invalid mode"),
             })
             .unwrap()
-            .mods(mods)
             .lazer(false)
+            .mods(mods)
             .combo(max_combo)
             .misses(miss_count);
 
