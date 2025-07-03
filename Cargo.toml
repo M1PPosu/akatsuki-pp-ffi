@@ -1,6 +1,6 @@
 [package]
 name = "akatsuki-pp-ffi"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 publish = false
 
@@ -9,8 +9,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 interoptopus = "0.14.14"
-akatsuki-pp-rs = { package = "akatsuki-pp", git = "https://github.com/RealistikOsu/akatsuki-pp-rs", rev = "f478254c79148a4ad7ce721a38418e21120d101e" }
-rosu-pp = { version = "3.0.0" }
+akatsuki-pp-rs = { package = "akatsuki-pp", git = "https://github.com/RealistikOsu/akatsuki-pp-rs", rev = "cf2c2871f0485122185eced5c277bc7de9e9c537" }
 
 [dev-dependencies]
 interoptopus_backend_csharp = "0.14.14"
