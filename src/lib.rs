@@ -1,5 +1,6 @@
 use akatsuki_pp_rs::{
     model::mode::GameMode,
+    any::PerformanceAttributes,
     osu_2019::{stars::OsuPerformanceAttributes, OsuPP},
     Beatmap,
 };
