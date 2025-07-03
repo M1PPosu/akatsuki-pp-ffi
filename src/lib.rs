@@ -1,14 +1,13 @@
 use akatsuki_pp_rs::{
     model::mode::GameMode,
     osu_2019::{stars::OsuPerformanceAttributes, OsuPP},
-    Beatmap as AkatsukiBeatmap,
+    Beatmap,
 };
 use interoptopus::{
     extra_type, ffi_function, ffi_type, function,
     patterns::{option::FFIOption, slice::FFISlice},
     Inventory, InventoryBuilder,
 };
-use rosu_pp::{any::PerformanceAttributes, Beatmap};
 use std::ffi::CStr;
 use std::os::raw::c_char;
 
@@ -80,7 +79,7 @@ fn calculate_performance(
     // osu!std rx
     
     if mode == 0 && mods & 128 > 0 {
-        let beatmap = AkatsukiBeatmap::from_path(beatmap_path).unwrap();
+        let beatmap = Beatmap::from_path(beatmap_path).unwrap();
         let mut calculator = OsuPP::from_map(&beatmap);
         calculator = calculator
             .mods(mods)
@@ -139,7 +138,7 @@ pub unsafe extern "C" fn calculate_score_bytes(
     
     // osu!std rx
     if mode == 0 && mods & 128 > 0 {
-        let beatmap = AkatsukiBeatmap::from_bytes(bytes).unwrap();
+        let beatmap = Beatmap::from_bytes(bytes).unwrap();
         let mut calculator = OsuPP::from_map(&beatmap);
         calculator = calculator
             .mods(mods)
