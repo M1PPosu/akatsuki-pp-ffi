@@ -29,6 +29,10 @@ namespace My.Company
         [DllImport(NativeLib, CallingConvention = CallingConvention.Cdecl, EntryPoint = "calculate_score_bytes")]
         public static extern CalculatePerformanceResult calculate_score_bytes(IntPtr beatmap_bytes, uint len, uint mode, uint mods, uint maxCombo, double accuracy, uint missCount, Optionu32 passedObjects);
 
+        // call Marshal.UnsafeAddrOfPinnedArrayElement(beatmapBytes, 0) to get IntPtr, use Encoding.UTF8.GetBytes for beatmap content
+        [DllImport(NativeLib, CallingConvention = CallingConvention.Cdecl, EntryPoint = "calculate_score_bytes")]
+        public static extern CalculatePerformanceResult calculate_score_bytes(IntPtr beatmap_bytes, uint len, uint mode, uint mods, uint maxCombo, double accuracy, uint missCount, Optionu32 passedObjects);
+
     }
 
     [Serializable]

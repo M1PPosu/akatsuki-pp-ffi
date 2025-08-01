@@ -77,6 +77,7 @@ fn calculate_performance(
     passed_objects: Option<u32>,
 ) -> CalculatePerformanceResult {
     // osu!std rx
+    
     if mode == 0 && mods & 128 > 0 {
         let mut calculator = OsuPP::from_map(&beatmap);
         calculator = calculator.mods(mods).combo(max_combo).misses(miss_count);
