@@ -1,6 +1,6 @@
 use akatsuki_pp_rs::{
-    model::mode::GameMode,
     any::PerformanceAttributes,
+    model::mode::GameMode,
     osu_2019::{stars::OsuPerformanceAttributes, OsuPP},
     Beatmap,
 };
@@ -46,7 +46,7 @@ impl CalculatePerformanceResult {
                 _ => 0.0,
             },
             od: match attributes {
-                PerformanceAttributes::Osu(ref attrs) => attrs.difficulty.od,
+                PerformanceAttributes::Osu(ref attrs) => attrs.difficulty.od(),
                 _ => 0.0,
             },
             max_combo: attributes.max_combo(),
@@ -76,27 +76,27 @@ fn calculate_performance(
     miss_count: u32,
     passed_objects: Option<u32>,
 ) -> CalculatePerformanceResult {
-    let beatmap_path = CStr::from_ptr(beatmap_path).to_str().unwrap();
     // osu!std rx
-    
     if mode == 0 && mods & 128 > 0 {
-        let beatmap = Beatmap::from_path(beatmap_path).unwrap();
         let mut calculator = OsuPP::from_map(&beatmap);
-        calculator = calculator
-            .mods(mods)
-            .combo(max_combo as u32)
-            .misses(miss_count as u32);
+        calculator = calculator.mods(mods).combo(max_combo).misses(miss_count);
 
-        if let Some(passed_objects) = passed_objects.into_option() {
+        if let Some(passed_objects) = passed_objects {
             calculator = calculator.passed_objects(passed_objects);
         }
-        
-        calculator = calculator.accuracy(accuracy as f32);
+
+        if let Some(accuracy) = accuracy {
+            calculator = calculator.accuracy(accuracy as f32);
+        } else {
+            calculator = calculator
+                .n300(count_300.unwrap())
+                .n100(count_100.unwrap())
+                .n50(count_50.unwrap());
+        }
 
         let rosu_result = calculator.calculate();
         CalculatePerformanceResult::from_rx_attributes(rosu_result)
     } else {
-        let beatmap = Beatmap::from_path(beatmap_path).unwrap();
         let mut calculator = beatmap
             .performance()
             .try_mode(match mode {
@@ -112,11 +112,18 @@ fn calculate_performance(
             .combo(max_combo)
             .misses(miss_count);
 
-        if let Some(passed_objects) = passed_objects.into_option() {
+        if let Some(passed_objects) = passed_objects {
             calculator = calculator.passed_objects(passed_objects);
         }
-        
-        calculator = calculator.accuracy(accuracy);
+
+        if let Some(accuracy) = accuracy {
+            calculator = calculator.accuracy(accuracy);
+        } else {
+            calculator = calculator
+                .n300(count_300.unwrap())
+                .n100(count_100.unwrap())
+                .n50(count_50.unwrap());
+        }
 
         let rosu_result = calculator.calculate();
         CalculatePerformanceResult::from_attributes(rosu_result)
@@ -125,61 +132,62 @@ fn calculate_performance(
 
 #[ffi_function]
 #[no_mangle]
-pub unsafe extern "C" fn calculate_score_bytes(
-    beatmap_bytes: *const u8, 
-    len: u32,
+pub unsafe extern "C" fn calculate_performance_from_path(
+    beatmap_path: *const c_char,
     mode: u32,
     mods: u32,
     max_combo: u32,
-    accuracy: f64,
+    accuracy: FFIOption<f64>,
+    count_300: FFIOption<u32>,
+    count_100: FFIOption<u32>,
+    count_50: FFIOption<u32>,
     miss_count: u32,
     passed_objects: FFIOption<u32>,
 ) -> CalculatePerformanceResult {
-    let bytes = std::slice::from_raw_parts(beatmap_bytes, len as usize);
-    
-    // osu!std rx
-    if mode == 0 && mods & 128 > 0 {
-        let beatmap = Beatmap::from_bytes(bytes).unwrap();
-        let mut calculator = OsuPP::from_map(&beatmap);
-        calculator = calculator
-            .mods(mods)
-            .combo(max_combo)
-            .misses(miss_count);
+    let beatmap = Beatmap::from_path(CStr::from_ptr(beatmap_path).to_str().unwrap()).unwrap();
 
-        if let Some(passed_objects) = passed_objects.into_option() {
-            calculator = calculator.passed_objects(passed_objects);
-        }
-        
-        calculator = calculator.accuracy(accuracy as f32);
+    calculate_performance(
+        beatmap,
+        mode,
+        mods,
+        max_combo,
+        accuracy.into_option(),
+        count_300.into_option(),
+        count_100.into_option(),
+        count_50.into_option(),
+        miss_count,
+        passed_objects.into_option(),
+    )
+}
 
-        let rosu_result = calculator.calculate();
-        CalculatePerformanceResult::from_rx_attributes(rosu_result)
-    } else {
-        let beatmap = Beatmap::from_bytes(bytes).unwrap();
-        let mut calculator = beatmap
-            .performance()
-            .try_mode(match mode {
-                0 => GameMode::Osu,
-                1 => GameMode::Taiko,
-                2 => GameMode::Catch,
-                3 => GameMode::Mania,
-                _ => panic!("Invalid mode"),
-            })
-            .unwrap()
-            .lazer(false)
-            .mods(mods)
-            .combo(max_combo)
-            .misses(miss_count);
+#[ffi_function]
+#[no_mangle]
+pub unsafe extern "C" fn calculate_performance_from_bytes(
+    beatmap_bytes: FFISlice<u8>,
+    mode: u32,
+    mods: u32,
+    max_combo: u32,
+    accuracy: FFIOption<f64>,
+    count_300: FFIOption<u32>,
+    count_100: FFIOption<u32>,
+    count_50: FFIOption<u32>,
+    miss_count: u32,
+    passed_objects: FFIOption<u32>,
+) -> CalculatePerformanceResult {
+    let beatmap = Beatmap::from_bytes(beatmap_bytes.as_slice()).unwrap();
 
-        if let Some(passed_objects) = passed_objects.into_option() {
-            calculator = calculator.passed_objects(passed_objects);
-        }
-        
-        calculator = calculator.accuracy(accuracy);
-
-        let rosu_result = calculator.calculate();
-        CalculatePerformanceResult::from_attributes(rosu_result)
-    }
+    calculate_performance(
+        beatmap,
+        mode,
+        mods,
+        max_combo,
+        accuracy.into_option(),
+        count_300.into_option(),
+        count_100.into_option(),
+        count_50.into_option(),
+        miss_count,
+        passed_objects.into_option(),
+    )
 }
 
 pub fn my_inventory() -> Inventory {
