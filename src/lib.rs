@@ -161,6 +161,10 @@ pub unsafe extern "C" fn calculate_performance_from_path(
     )
 }
 
+static mut cached_beatmap: Option<Beatmap> = None;
+static mut cached_beatmap_len: usize = 0;
+
+
 #[ffi_function]
 #[no_mangle]
 pub unsafe extern "C" fn calculate_performance_from_bytes(
@@ -175,7 +179,18 @@ pub unsafe extern "C" fn calculate_performance_from_bytes(
     miss_count: u32,
     passed_objects: FFIOption<u32>,
 ) -> CalculatePerformanceResult {
-    let beatmap = Beatmap::from_bytes(beatmap_bytes.as_slice()).unwrap();
+    let beatmap: Beatmap;
+
+    // FUCK that this is unsafe!
+    // we need PURE PERFORMANCE!
+    if cached_beatmap_len == beatmap_bytes.len() && cached_beatmap.is_some() {
+        beatmap = cached_beatmap.clone().unwrap();
+    } else {
+        beatmap = Beatmap::from_bytes(beatmap_bytes.as_slice()).unwrap();
+        cached_beatmap = Some(beatmap.clone());
+        cached_beatmap_len = beatmap_bytes.len();
+    }
+
 
     calculate_performance(
         beatmap,
