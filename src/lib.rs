@@ -1,8 +1,6 @@
 use akatsuki_pp_rs::{
-    any::PerformanceAttributes,
-    model::mode::GameMode,
     osu_2019::{stars::OsuPerformanceAttributes, OsuPP},
-    Beatmap,
+     AnyPP, Beatmap, GameMode, PerformanceAttributes,
 };
 use interoptopus::{
     extra_type, ffi_function, ffi_type, function,
@@ -45,11 +43,11 @@ impl CalculatePerformanceResult {
                 PerformanceAttributes::Osu(ref attrs) => attrs.difficulty.ar,
                 _ => 0.0,
             },
-            od: match attributes {
-                PerformanceAttributes::Osu(ref attrs) => attrs.difficulty.od(),
+            od: match attributes 
+                PerformanceAttributes::Osu(ref attrs) => attrs.difficulty.od,
                 _ => 0.0,
             },
-            max_combo: attributes.max_combo(),
+            max_combo: attributes.max_combo() as u32,
         }
     }
 
@@ -81,11 +79,19 @@ fn calculate_performance(
     if mode == 0 && mods & 128 > 0 {
         let mut calculator = OsuPP::from_map(&beatmap);
         calculator = calculator.mods(mods).combo(max_combo).misses(miss_count);
+        let mut calculator = OsuPP::new(&beatmap);
+        calculator = calculator
+            .mods(mods)
+            .combo(max_combo as usize)
+            .misses(miss_count as usize);
+
 
         if let Some(passed_objects) = passed_objects {
             calculator = calculator.passed_objects(passed_objects);
+            calculator = calculator.passed_objects(passed_objects as usize);
         }
 
+        
         if let Some(accuracy) = accuracy {
             calculator = calculator.accuracy(accuracy as f32);
         } else {
@@ -93,6 +99,9 @@ fn calculate_performance(
                 .n300(count_300.unwrap())
                 .n100(count_100.unwrap())
                 .n50(count_50.unwrap());
+                .n300(count_300.unwrap() as usize)
+                .n100(count_100.unwrap() as usize)
+                .n50(count_50.unwrap() as usize);
         }
 
         let rosu_result = calculator.calculate();
@@ -101,6 +110,9 @@ fn calculate_performance(
         let mut calculator = beatmap
             .performance()
             .try_mode(match mode {
+        let mut calculator = AnyPP::new(&beatmap);
+        calculator = calculator
+            .mode(match mode {
                 0 => GameMode::Osu,
                 1 => GameMode::Taiko,
                 2 => GameMode::Catch,
@@ -112,9 +124,13 @@ fn calculate_performance(
             .lazer(false)
             .combo(max_combo)
             .misses(miss_count);
+            .combo(max_combo as usize)
+            .n_misses(miss_count as usize);
+
 
         if let Some(passed_objects) = passed_objects {
             calculator = calculator.passed_objects(passed_objects);
+            calculator = calculator.passed_objects(passed_objects as usize);
         }
 
         if let Some(accuracy) = accuracy {
@@ -124,6 +140,9 @@ fn calculate_performance(
                 .n300(count_300.unwrap())
                 .n100(count_100.unwrap())
                 .n50(count_50.unwrap());
+                .n300(count_300.unwrap() as usize)
+                .n100(count_100.unwrap() as usize)
+                .n50(count_50.unwrap() as usize);
         }
 
         let rosu_result = calculator.calculate();
